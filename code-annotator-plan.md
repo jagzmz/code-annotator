@@ -226,9 +226,9 @@ export function viewHistoryCommand(historyManager: IHistoryManager): Promise<voi
 
   Note: VS Code `gutterIconPath` requires actual SVG file paths, not codicons directly. Max 16x16px, must use `gutterIconSize: contain`.
 - **validation**: SVGs render correctly at 16x16px. Visible on both light and dark backgrounds.
-- **status**: Not Completed
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Created two 16x16 SVG speech-bubble icons. Both validated as well-formed XML via xmllint. Light-theme icon uses #424242 (dark fill), dark-theme icon uses #E0E0E0 (light fill). Design is a rounded-rectangle speech bubble with a triangular tail at bottom-left, matching the VS Code comment codicon style.
+- **files edited/created**: `images/annotation-gutter-light.svg`, `images/annotation-gutter-dark.svg`
 
 ### T5: Decoration Manager
 - **depends_on**: [T2, T3, T4]
