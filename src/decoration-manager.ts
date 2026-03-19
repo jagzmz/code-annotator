@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 import { AnnotationStore } from './annotation-store';
 
 /**
@@ -65,7 +66,26 @@ export class DecorationManager implements vscode.Disposable {
   }
 
   /**
+   * Generate an SVG speech-bubble icon with the given fill color.
+   */
+  private generateGutterSvg(color: string): string {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3.5C3 2.67 3.67 2 4.5 2h7c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5H7L5 12v-2h-.5C3.67 10 3 9.33 3 8.5v-5z" fill="${color}"/></svg>`;
+  }
+
+  /**
+   * Write a dynamic SVG gutter icon to the extension's storage and return its URI.
+   */
+  private writeDynamicIcon(filename: string, color: string): vscode.Uri {
+    const dir = this.context.globalStorageUri.fsPath;
+    fs.mkdirSync(dir, { recursive: true });
+    const filePath = path.join(dir, filename);
+    fs.writeFileSync(filePath, this.generateGutterSvg(color), 'utf8');
+    return vscode.Uri.file(filePath);
+  }
+
+  /**
    * Create the TextEditorDecorationType from current configuration.
+   * Gutter icon color is driven by the code-annotator.gutterIconColor setting.
    */
   private createDecorationType(): vscode.TextEditorDecorationType {
     const config = vscode.workspace.getConfiguration('code-annotator');
@@ -75,16 +95,9 @@ export class DecorationManager implements vscode.Disposable {
     );
     const gutterIconColor = config.get<string>('gutterIconColor', '#FDD835');
 
-    const lightGutterIconPath = path.join(
-      this.context.extensionPath,
-      'images',
-      'annotation-gutter-light.svg',
-    );
-    const darkGutterIconPath = path.join(
-      this.context.extensionPath,
-      'images',
-      'annotation-gutter-dark.svg',
-    );
+    // Generate dynamic SVGs using the configured color
+    const darkIcon = this.writeDynamicIcon('gutter-dark.svg', gutterIconColor);
+    const lightIcon = this.writeDynamicIcon('gutter-light.svg', gutterIconColor);
 
     return vscode.window.createTextEditorDecorationType({
       backgroundColor: highlightColor,
@@ -93,10 +106,10 @@ export class DecorationManager implements vscode.Disposable {
       overviewRulerColor: gutterIconColor,
       overviewRulerLane: vscode.OverviewRulerLane.Left,
       light: {
-        gutterIconPath: vscode.Uri.file(lightGutterIconPath),
+        gutterIconPath: lightIcon,
       },
       dark: {
-        gutterIconPath: vscode.Uri.file(darkGutterIconPath),
+        gutterIconPath: darkIcon,
       },
     });
   }
