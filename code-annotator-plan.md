@@ -134,9 +134,9 @@ export function viewHistoryCommand(historyManager: IHistoryManager): Promise<voi
   - Run `npm install --save-dev @types/vscode esbuild typescript`
   - **UUID strategy**: Use `crypto.randomUUID()` (available in Node 19+ and all VS Code 1.85+ runtimes). No external package needed. Document this choice in a comment in `src/types.ts` if created here, or leave for T6.
 - **validation**: `npm run build` succeeds (add `"build": "node esbuild.js"` script). Extension compiles with no errors.
-- **status**: Not Completed
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Scaffolded full VS Code extension project. Created package.json with all 7 commands, context menus, keybindings, and configuration. Set up tsconfig.json (ES2020, commonjs, strict), esbuild.js bundler, .vscodeignore, .gitignore. Created src/extension.ts with activate/deactivate stubs and src/commands/ directory. Installed @types/vscode, esbuild, and typescript dev dependencies. Build succeeds via `npm run build`.
+- **files edited/created**: `package.json`, `package-lock.json`, `tsconfig.json`, `esbuild.js`, `.vscodeignore`, `.gitignore`, `src/extension.ts`, `src/commands/.gitkeep`
 
 ### T2: Annotation Data Model & Store
 - **depends_on**: []
@@ -188,9 +188,9 @@ export function viewHistoryCommand(historyManager: IHistoryManager): Promise<voi
   - Emits events via `vscode.EventEmitter<void>` (`onDidChange`) so other components can react to store changes
   - Implements `Disposable` (dispose the EventEmitter)
 - **validation**: Can be coded immediately. Requires `@types/vscode` to compile (depends on T1 for `npm install`). Unit-testable.
-- **status**: Not Completed
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Implemented Annotation, CollectionSnapshot, and IHistoryManager interfaces in types.ts. Built AnnotationStore class with Map-based storage, full CRUD (add, updateComment, updateLines, delete, clear), query methods (getByUri, getAll, getAtLine, count, isEmpty), and vscode.EventEmitter-based onDidChange notifications. All methods conform to the module export contract. Implements Disposable.
+- **files edited/created**: `src/types.ts`, `src/annotation-store.ts`
 
 ### T3: Line Drift Tracker
 - **depends_on**: [T2]
@@ -213,9 +213,9 @@ export function viewHistoryCommand(historyManager: IHistoryManager): Promise<voi
 
   **Important**: Process `contentChanges` in reverse order (highest line first) to avoid cascading offset errors when multiple changes exist in one event.
 - **validation**: Manually test: annotate line 10, add a line above it, verify annotation moves to line 11. Delete a line above, verify annotation moves to line 9.
-- **status**: Not Completed
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Implemented LineTracker class that listens to vscode.workspace.onDidChangeTextDocument and adjusts annotation line numbers via store.updateLines(). Processes contentChanges in reverse order (highest line first) to avoid cascading offset errors. Handles three cases: change before annotation (shift both lines), change overlapping annotation (expand/shrink endLine), change after annotation (no-op). Skips zero-delta changes for efficiency. Entire listener wrapped in try/catch. Build and type-check pass cleanly.
+- **files edited/created**: `src/line-tracker.ts`
 
 ### T4: Gutter Icon Asset
 - **depends_on**: []
@@ -264,9 +264,9 @@ export function viewHistoryCommand(historyManager: IHistoryManager): Promise<voi
     - `window.onDidChangeTextEditorSelection` → update `hasAnnotationAtCursor` context key
   - `dispose()`: dispose decoration type and all event listeners
 - **validation**: Add an annotation via store, verify gutter icon and background highlight appear. Hover shows annotation text. Edit/Delete context menu items only show when cursor is on an annotated line.
-- **status**: Not Completed
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Implemented DecorationManager class with: TextEditorDecorationType using config-driven backgroundColor and gutterIconColor, light/dark SVG gutter icons via Uri.file paths, isWholeLine highlights, overview ruler indicators. refreshDecorations builds DecorationOptions with Range and MarkdownString hover messages. refreshAllVisibleEditors iterates visible editors. 100ms debounce on store.onDidChange. Context key `code-annotator.hasAnnotationAtCursor` updated on cursor movement via onDidChangeTextEditorSelection. Configuration changes recreate decoration type (apply new before disposing old to avoid flicker). All event listeners and the decoration type are disposed in dispose(). Also installed @types/node as a dev dependency for the `path` module. Build and tsc --noEmit both pass clean.
+- **files edited/created**: `src/decoration-manager.ts`, `package.json` (added @types/node devDep)
 
 ### T6: Annotate Command
 - **depends_on**: [T5]
@@ -344,9 +344,9 @@ export function viewHistoryCommand(historyManager: IHistoryManager): Promise<voi
   7. **Code freshness**: The `code` field is a point-in-time snapshot from when the annotation was created. This is by design — the markdown output reflects what the user saw when they annotated. (If live code is needed in the future, the collect command would re-read from the document.)
   8. Return the full markdown string
 - **validation**: Create mock annotations across 2 files, call formatter, verify output matches expected markdown with correct grouping, relative paths, language tags, and code snippets.
-- **status**: Not Completed
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Implemented pure formatAnnotationsAsMarkdown function. Groups annotations by URI (sorted alphabetically by workspace-relative path), sorts within groups by startLine. Produces markdown with file headers (## `relative/path`), line headings (### Line N or ### Lines N-M, 1-based), fenced code blocks with languageId, and blockquoted comments. Handles edge cases: empty annotations, files outside workspace (uses full path), multi-line comments (each line prefixed with >). Verified via transpiled inline tests against mock annotations across multiple files. Build and tsc --noEmit pass clean.
+- **files edited/created**: `src/markdown-formatter.ts`
 
 ### T9: Collect Annotations Command
 - **depends_on**: [T8]
@@ -385,9 +385,9 @@ export function viewHistoryCommand(historyManager: IHistoryManager): Promise<voi
     - `clearHistory(): void` — sets the workspaceState key to empty array
   - workspaceState stores a JSON-serializable array of `CollectionSnapshot` objects via `workspaceState.update(key, value)`
 - **validation**: Save a snapshot → call getSnapshots → verify it's returned. Save 51 snapshots → verify only 50 remain (oldest dropped). clearHistory → getSnapshots returns [].
-- **status**: Not Completed
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Implemented HistoryManager class conforming to IHistoryManager interface. Uses ExtensionContext.workspaceState with key `code-annotator.collectionHistory` for persistence. saveSnapshot creates CollectionSnapshot with crypto.randomUUID() and Date.now(), appends to stored array, and caps at 50 snapshots (drops oldest when exceeded). getSnapshots returns all snapshots sorted by timestamp descending (newest first). clearHistory resets storage to empty array. Build and type-check pass.
+- **files edited/created**: `src/history-manager.ts`
 
 ### T11: View History Command
 - **depends_on**: [T10]
@@ -431,9 +431,9 @@ export function viewHistoryCommand(historyManager: IHistoryManager): Promise<voi
   - Call update once on construction
   - `dispose()`: dispose the status bar item and event listener
 - **validation**: Add annotations → status bar shows "$(comment) 1" → add more → count updates → collect → status bar hides (count 0).
-- **status**: Not Completed
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Implemented StatusBarController with vscode.StatusBarItem (Right-aligned, priority 100). Shows annotation count using `$(comment)` codicon, wired to `code-annotator.collectAnnotations` command on click. Listens to store.onDidChange for live updates. Shows item when count > 0, hides when 0. Disposes both the status bar item and event listener.
+- **files edited/created**: `src/status-bar.ts`
 
 ### T13: Extension Activation — Wire Everything Together
 - **depends_on**: [T1, T5, T6, T7, T8, T9, T10, T11, T12]
