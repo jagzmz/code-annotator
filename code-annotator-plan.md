@@ -213,7 +213,7 @@ export function viewHistoryCommand(historyManager: IHistoryManager): Promise<voi
 
   **Important**: Process `contentChanges` in reverse order (highest line first) to avoid cascading offset errors when multiple changes exist in one event.
 - **validation**: Manually test: annotate line 10, add a line above it, verify annotation moves to line 11. Delete a line above, verify annotation moves to line 9.
-- **status**: Completed
+- **status**: Completed (committed: 21b62a4)
 - **log**: Implemented LineTracker class that listens to vscode.workspace.onDidChangeTextDocument and adjusts annotation line numbers via store.updateLines(). Processes contentChanges in reverse order (highest line first) to avoid cascading offset errors. Handles three cases: change before annotation (shift both lines), change overlapping annotation (expand/shrink endLine), change after annotation (no-op). Skips zero-delta changes for efficiency. Entire listener wrapped in try/catch. Build and type-check pass cleanly.
 - **files edited/created**: `src/line-tracker.ts`
 
