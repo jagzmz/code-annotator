@@ -1,0 +1,95 @@
+{
+  "name": "code-annotator",
+  "displayName": "Code Annotator",
+  "description": "Highlight code, add annotations, and collect them as structured markdown.",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "scripts": {
+    "build": "node esbuild.js"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "code-annotator.annotate",
+        "title": "Code Annotator: Add Annotation"
+      },
+      {
+        "command": "code-annotator.editAnnotation",
+        "title": "Code Annotator: Edit Annotation"
+      },
+      {
+        "command": "code-annotator.deleteAnnotation",
+        "title": "Code Annotator: Delete Annotation"
+      },
+      {
+        "command": "code-annotator.collectAnnotations",
+        "title": "Code Annotator: Collect Annotations"
+      },
+      {
+        "command": "code-annotator.clearAllAnnotations",
+        "title": "Code Annotator: Clear All Annotations"
+      },
+      {
+        "command": "code-annotator.viewHistory",
+        "title": "Code Annotator: View Collection History"
+      },
+      {
+        "command": "code-annotator.clearHistory",
+        "title": "Code Annotator: Clear Collection History"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "code-annotator.annotate",
+          "when": "editorTextFocus",
+          "group": "1_modification"
+        },
+        {
+          "command": "code-annotator.editAnnotation",
+          "when": "editorTextFocus && code-annotator.hasAnnotationAtCursor",
+          "group": "1_modification"
+        },
+        {
+          "command": "code-annotator.deleteAnnotation",
+          "when": "editorTextFocus && code-annotator.hasAnnotationAtCursor",
+          "group": "1_modification"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "code-annotator.annotate",
+        "key": "ctrl+shift+a",
+        "mac": "cmd+shift+a",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "Code Annotator",
+      "properties": {
+        "code-annotator.highlightColor": {
+          "type": "string",
+          "default": "rgba(255, 213, 79, 0.15)",
+          "description": "Background highlight color for annotated lines."
+        },
+        "code-annotator.gutterIconColor": {
+          "type": "string",
+          "default": "#FDD835",
+          "description": "Color for the gutter icon and overview ruler indicator."
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.110.0",
+    "esbuild": "^0.27.4",
+    "typescript": "^5.9.3"
+  }
+}
