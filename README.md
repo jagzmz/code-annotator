@@ -1,6 +1,10 @@
-# Code Annotator
+<p align="center">
+  <img src="images/icon.png" alt="Code Annotator" width="128" height="128">
+</p>
 
-Highlight code, add annotations, and collect them as structured markdown.
+<h1 align="center">Code Annotator</h1>
+
+<p align="center">Highlight code, add annotations, and collect them as structured markdown.</p>
 
 ## Features
 
