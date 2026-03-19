@@ -25,6 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('code-annotator.collectAnnotations', () => collectAnnotationsCommand(store, historyManager)),
     vscode.commands.registerCommand('code-annotator.clearAllAnnotations', () => clearAllCommand(store)),
     vscode.commands.registerCommand('code-annotator.viewHistory', () => viewHistoryCommand(historyManager)),
+    vscode.commands.registerCommand('code-annotator.clearHistory', () => { historyManager.clearHistory(); vscode.window.showInformationMessage('Collection history cleared'); }),
     store,
     lineTracker,
     decorationManager,

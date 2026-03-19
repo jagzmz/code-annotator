@@ -69,7 +69,11 @@ export class DecorationManager implements vscode.Disposable {
    * Generate an SVG speech-bubble icon with the given fill color.
    */
   private generateGutterSvg(color: string): string {
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3.5C3 2.67 3.67 2 4.5 2h7c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5H7L5 12v-2h-.5C3.67 10 3 9.33 3 8.5v-5z" fill="${color}"/></svg>`;
+    // Shifted right (x+2), with a darker outline for visual weight
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">` +
+      `<path d="M5 3.5C5 2.67 5.67 2 6.5 2h6c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5H9L7 12v-2h-.5C5.67 10 5 9.33 5 8.5v-5z" fill="${color}" stroke="${color}" stroke-width="1.2" stroke-linejoin="round"/>` +
+      `<path d="M5 3.5C5 2.67 5.67 2 6.5 2h6c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5H9L7 12v-2h-.5C5.67 10 5 9.33 5 8.5v-5z" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="0.5"/>` +
+      `</svg>`;
   }
 
   /**
