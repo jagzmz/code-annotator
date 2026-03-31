@@ -10,7 +10,8 @@ import { AnnotationStore } from './annotation-store';
  * configuration changes to keep decorations in sync.
  */
 export class DecorationManager implements vscode.Disposable {
-  private decorationType: vscode.TextEditorDecorationType;
+  private highlightDecorationType: vscode.TextEditorDecorationType;
+  private gutterDecorationType: vscode.TextEditorDecorationType;
   private readonly disposables: vscode.Disposable[] = [];
   private debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -18,7 +19,8 @@ export class DecorationManager implements vscode.Disposable {
     private readonly store: AnnotationStore,
     private readonly context: vscode.ExtensionContext,
   ) {
-    this.decorationType = this.createDecorationType();
+    this.highlightDecorationType = this.createHighlightDecorationType();
+    this.gutterDecorationType = this.createGutterDecorationType();
 
     // Store changes → debounced refresh all visible editors
     this.disposables.push(
@@ -88,15 +90,27 @@ export class DecorationManager implements vscode.Disposable {
   }
 
   /**
-   * Create the TextEditorDecorationType from current configuration.
-   * Gutter icon color is driven by the code-annotator.gutterIconColor setting.
+   * Create the TextEditorDecorationType used for highlighted annotation ranges.
    */
-  private createDecorationType(): vscode.TextEditorDecorationType {
+  private createHighlightDecorationType(): vscode.TextEditorDecorationType {
     const config = vscode.workspace.getConfiguration('code-annotator');
     const highlightColor = config.get<string>(
       'highlightColor',
       'rgba(255, 213, 79, 0.15)',
     );
+
+    return vscode.window.createTextEditorDecorationType({
+      backgroundColor: highlightColor,
+      isWholeLine: true,
+    });
+  }
+
+  /**
+   * Create the TextEditorDecorationType used for annotation gutter icons.
+   * Gutter icon color is driven by the code-annotator.gutterIconColor setting.
+   */
+  private createGutterDecorationType(): vscode.TextEditorDecorationType {
+    const config = vscode.workspace.getConfiguration('code-annotator');
     const gutterIconColor = config.get<string>('gutterIconColor', '#FDD835');
 
     // Generate dynamic SVGs using the configured color
@@ -104,7 +118,6 @@ export class DecorationManager implements vscode.Disposable {
     const lightIcon = this.writeDynamicIcon('gutter-light.svg', gutterIconColor);
 
     return vscode.window.createTextEditorDecorationType({
-      backgroundColor: highlightColor,
       isWholeLine: true,
       gutterIconSize: 'contain',
       overviewRulerColor: gutterIconColor,
@@ -119,18 +132,21 @@ export class DecorationManager implements vscode.Disposable {
   }
 
   /**
-   * Dispose the old decoration type and create a new one.
-   * Applies new decorations BEFORE disposing old to avoid flicker.
+   * Dispose old decoration types and create new ones.
+   * Applies new decorations BEFORE disposing old types to avoid flicker.
    */
   private recreateDecorationType(): void {
-    const oldDecorationType = this.decorationType;
-    this.decorationType = this.createDecorationType();
+    const oldHighlightDecorationType = this.highlightDecorationType;
+    const oldGutterDecorationType = this.gutterDecorationType;
+    this.highlightDecorationType = this.createHighlightDecorationType();
+    this.gutterDecorationType = this.createGutterDecorationType();
 
     // Apply new decorations first to prevent flicker
     this.refreshAllVisibleEditors();
 
-    // Then dispose the old type
-    oldDecorationType.dispose();
+    // Then dispose the old types
+    oldHighlightDecorationType.dispose();
+    oldGutterDecorationType.dispose();
   }
 
   /**
@@ -140,7 +156,7 @@ export class DecorationManager implements vscode.Disposable {
     const uri = editor.document.uri.toString();
     const annotations = this.store.getByUri(uri);
 
-    const decorationOptions: vscode.DecorationOptions[] = annotations.map(
+    const highlightDecorationOptions: vscode.DecorationOptions[] = annotations.map(
       (annotation) => ({
         range: new vscode.Range(
           annotation.startLine,
@@ -152,7 +168,18 @@ export class DecorationManager implements vscode.Disposable {
       }),
     );
 
-    editor.setDecorations(this.decorationType, decorationOptions);
+    const gutterDecorationOptions: vscode.DecorationOptions[] = annotations.map(
+      (annotation) => ({
+        range: new vscode.Range(annotation.startLine, 0, annotation.startLine, 0),
+        hoverMessage: new vscode.MarkdownString(annotation.comment),
+      }),
+    );
+
+    editor.setDecorations(
+      this.highlightDecorationType,
+      highlightDecorationOptions,
+    );
+    editor.setDecorations(this.gutterDecorationType, gutterDecorationOptions);
   }
 
   /**
@@ -203,14 +230,15 @@ export class DecorationManager implements vscode.Disposable {
   }
 
   /**
-   * Dispose all event listeners, the decoration type, and clear the debounce timer.
+   * Dispose all event listeners, decoration types, and clear the debounce timer.
    */
   dispose(): void {
     if (this.debounceTimer !== undefined) {
       clearTimeout(this.debounceTimer);
       this.debounceTimer = undefined;
     }
-    this.decorationType.dispose();
+    this.highlightDecorationType.dispose();
+    this.gutterDecorationType.dispose();
     for (const d of this.disposables) {
       d.dispose();
     }
